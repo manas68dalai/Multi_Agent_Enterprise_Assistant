@@ -1,0 +1,432 @@
+{
+  "meta": {
+    "provider": "groq",
+    "model": "openai/gpt-oss-20b",
+    "group": "all",
+    "cases": 23,
+    "timestamp": "2026-11-16T01:42:57",
+    "avg_latency_s": 19.4
+  },
+  "summary": {
+    "route": {
+      "passed": 23,
+      "total": 23
+    },
+    "tools": {
+      "passed": 16,
+      "total": 16
+    },
+    "answer": {
+      "passed": 14,
+      "total": 14
+    },
+    "approval": {
+      "passed": 23,
+      "total": 23
+    },
+    "side_effects": {
+      "passed": 23,
+      "total": 23
+    },
+    "fallback": {
+      "passed": 23,
+      "total": 23
+    },
+    "pass": {
+      "passed": 23,
+      "total": 23
+    }
+  },
+  "cases": [
+    {
+      "q": "Hi there!",
+      "group": "no-agent",
+      "secs": 2.9,
+      "error": null,
+      "agents": [],
+      "route": true,
+      "tools": null,
+      "answer": null,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "Hello! How can I help you today?",
+      "pass": true
+    },
+    {
+      "q": "Thanks, that's all I needed.",
+      "group": "no-agent",
+      "secs": 3.9,
+      "error": null,
+      "agents": [],
+      "route": true,
+      "tools": null,
+      "answer": null,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "You\u2019re welcome!",
+      "pass": true
+    },
+    {
+      "q": "What can you help me with?",
+      "group": "no-agent",
+      "secs": 5.0,
+      "error": null,
+      "agents": [],
+      "route": true,
+      "tools": null,
+      "answer": null,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "I can help with company policies, order and ticket lookups, creating tickets, weather updates, and currency conversions. Let me know what you need!",
+      "pass": true
+    },
+    {
+      "q": "How many days of annual leave do employees get?",
+      "group": "research",
+      "secs": 24.9,
+      "error": null,
+      "agents": [
+        "research"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "Employees receive 24 days of paid annual leave per calendar year (full\u2011time).",
+      "pass": true
+    },
+    {
+      "q": "What is the minimum password length?",
+      "group": "research",
+      "secs": 15.4,
+      "error": null,
+      "agents": [
+        "research"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "The minimum password length is **14 characters**.",
+      "pass": true
+    },
+    {
+      "q": "What's the hotel limit per night for business travel?",
+      "group": "research",
+      "secs": 14.9,
+      "error": null,
+      "agents": [
+        "research"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "The hotel per\u2011night limit for business travel is **$200 per night**.",
+      "pass": true
+    },
+    {
+      "q": "How many days can I work from abroad?",
+      "group": "research",
+      "secs": 27.0,
+      "error": null,
+      "agents": [
+        "research"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "You can work from abroad for up to **20 days per calendar year** (remote_work_policy.txt).",
+      "pass": true
+    },
+    {
+      "q": "Convert 100 USD to EUR",
+      "group": "research",
+      "secs": 19.8,
+      "error": null,
+      "agents": [
+        "research"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": null,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "100\u202fUSD equals 90.48\u202fEUR (rate\u202f0.90481 as of\u202f2026\u201111\u201113).",
+      "pass": true
+    },
+    {
+      "q": "What's the weather in Paris right now?",
+      "group": "research",
+      "secs": 13.3,
+      "error": null,
+      "agents": [
+        "research"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": null,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "The current weather in Paris is 11.9\u202f\u00b0C with 78\u202f% humidity, 20.7\u202fkm/h wind, and light rain.",
+      "pass": true
+    },
+    {
+      "q": "Look up customer C1001",
+      "group": "data",
+      "secs": 16.4,
+      "error": null,
+      "agents": [
+        "data"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "Customer C1001 details:\n\n- **Name:** Aarav Sharma  \n- **Email:** aarav.sharma@example.com  \n- **Tier:** standard  \n- **Country:** India  \n- **Status:** active  \n- **Signup date:** 2026\u201107\u201113T19:23:01.248000Z",
+      "pass": true
+    },
+    {
+      "q": "Find the customer named Patel",
+      "group": "data",
+      "secs": 20.9,
+      "error": null,
+      "agents": [
+        "data"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "Customer found:\n\n- **ID:** C1002  \n- **Name:** Priya Patel  \n- **Email:** priya.patel@example.com  \n- **Tier:** gold  \n- **Country:** India  \n- **Status:** active  \n- **Signup date:** 2025\u201111\u201130T19:23:01.248000Z",
+      "pass": true
+    },
+    {
+      "q": "What is the status of order O5001?",
+      "group": "data",
+      "secs": 17.4,
+      "error": null,
+      "agents": [
+        "data"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": null,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "The status of order O5001 is **shipped**.",
+      "pass": true
+    },
+    {
+      "q": "Show me open tickets for customer C1002",
+      "group": "data",
+      "secs": 14.9,
+      "error": null,
+      "agents": [
+        "data"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": null,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "Here are the open tickets for customer **C1002**:\n\n- **Ticket ID:** T9005 \u2013 \u201cLaptop will not boot\u201d  \n  - Status: open  \n  - Priority: urgent  \n  - Created: 2026\u201111\u201113\n\nNo other open tickets were found.",
+      "pass": true
+    },
+    {
+      "q": "Show me order O9999",
+      "group": "data",
+      "secs": 16.0,
+      "error": null,
+      "agents": [
+        "data"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "I couldn\u2019t find any order with the ID O9999. No ticket was created because the order does not exist.",
+      "pass": true
+    },
+    {
+      "q": "Look up C1003's shipped orders and tell me the policy on reporting a lost laptop.",
+      "group": "multi-step",
+      "secs": 29.3,
+      "error": null,
+      "agents": [
+        "data",
+        "research"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "Here are the shipped orders for customer **C1003**:\n\n- **O5015** \u2013 $526.99 \u2013 shipped on 2026\u201110\u201125  \n- **O5030** \u2013 $956.00 \u2013 shipped on 2026\u201110\u201118  \n- **O5029** \u2013 $329.00 \u2013 shipped on 2026\u201109\u201126  \n\n**Policy on reporting a lost laptop**  \nAll company laptops must be reported if lost or stolen within **1 hour** of discovery. (source: security_policy.md)",
+      "pass": true
+    },
+    {
+      "q": "Find Priya Patel and tell me what the remote work policy says about working from abroad.",
+      "group": "multi-step",
+      "secs": 29.8,
+      "error": null,
+      "agents": [
+        "data",
+        "research"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "Priya\u202fPatel (ID\u202fC1002, email\u202fpriya.patel@example.com) is an active gold\u2011tier employee based in India.\n\n**Remote work from abroad policy**\n\n- Allowed for up to **20 days per calendar year**.  \n- Employees must **notify HR and IT before travelling**.  \n- Core working hours are **10:00\u201116:00** in the employee\u2019s local time zone.  \n- A one\u2011time **$500 equipment stipend** plus **$50/month** for internet costs is provided. (source: remote_work_policy.txt)",
+      "pass": true
+    },
+    {
+      "q": "What's the weather in Berlin and how many sick days do employees get?",
+      "group": "multi-step",
+      "secs": 35.7,
+      "error": null,
+      "agents": [
+        "research"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "The current weather in Berlin is overcast with a temperature of 7.2\u202f\u00b0C, humidity 71\u202f%, and wind 13.5\u202fkm/h.  \n\nEmployees receive 12 days of paid sick leave per year, and a medical certificate is required for absences longer than 3 consecutive days (source: leave_policy.md).",
+      "pass": true
+    },
+    {
+      "q": "Create a high priority ticket for C1001: laptop screen flickers",
+      "group": "write",
+      "secs": 13.1,
+      "error": null,
+      "agents": [
+        "task"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": null,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "Ticket created successfully for customer C1001: laptop screen flickers.",
+      "pass": true
+    },
+    {
+      "q": "Create a ticket for Liam Johnson: VPN keeps disconnecting",
+      "group": "write",
+      "secs": 18.2,
+      "error": null,
+      "agents": [
+        "data",
+        "task"
+      ],
+      "route": true,
+      "tools": true,
+      "answer": null,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "A ticket has been created for Liam Johnson (Customer ID: C1003) with the subject \u201cVPN disconnects\u201d and description \u201cVPN keeps disconnecting.\u201d The priority is set to medium.",
+      "pass": true
+    },
+    {
+      "q": "Close ticket T9001",
+      "group": "write",
+      "secs": 16.8,
+      "error": null,
+      "agents": [
+        "task"
+      ],
+      "route": true,
+      "tools": null,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "You declined, so I didn\u2019t close ticket T9001.",
+      "pass": true
+    },
+    {
+      "q": "Create a ticket for C1004: monitor is flickering",
+      "group": "write",
+      "secs": 15.3,
+      "error": null,
+      "agents": [
+        "task"
+      ],
+      "route": true,
+      "tools": null,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "You declined, so I didn't create the ticket.",
+      "pass": true
+    },
+    {
+      "q": "Look up customer C1001",
+      "group": "failure",
+      "secs": 36.3,
+      "error": null,
+      "agents": [
+        "data",
+        "data"
+      ],
+      "route": true,
+      "tools": null,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "I wasn\u2019t able to retrieve the customer record for C1001 because the database queries failed. Some details may be missing due to the errors. If you have any additional information or a different customer ID, let me know.",
+      "pass": true
+    },
+    {
+      "q": "What's the weather in Paris right now?",
+      "group": "failure",
+      "secs": 40.1,
+      "error": null,
+      "agents": [
+        "research",
+        "research"
+      ],
+      "route": true,
+      "tools": null,
+      "answer": true,
+      "approval": true,
+      "side_effects": true,
+      "fallback": true,
+      "final_answer": "I\u2019m sorry, but I\u2019m unable to retrieve the current weather for Paris at this time.",
+      "pass": true
+    }
+  ]
+}

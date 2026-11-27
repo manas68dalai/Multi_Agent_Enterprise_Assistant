@@ -1,0 +1,25 @@
+langchain
+langchain-core
+langgraph
+langchain-community 
+langchain-text-splitters 
+langchain-ollama
+langchain-huggingface
+langchain-qdrant
+langchain-openai          # optional provider
+langchain-anthropic       # optional provider
+langchain-groq
+langsmith
+qdrant-client
+pymongo
+langgraph-checkpoint-mongodb
+sentence-transformers
+fastapi
+uvicorn[standard]
+streamlit
+pydantic-settings
+python-dotenv
+pypdf 
+requests
+python-multipart 
+httpx

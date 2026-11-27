@@ -1,0 +1,12 @@
+venv/
+.venv/
+.git/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+data/mongo/
+data/qdrant/
+evals/
+tests/

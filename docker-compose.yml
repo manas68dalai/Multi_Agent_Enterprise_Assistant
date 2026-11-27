@@ -1,22 +1,78 @@
-services:
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: qdrant
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - ./data/qdrant:/qdrant/storage
-    restart: unless-stopped
+name: enterprise-assistant
 
+x-app: &app
+  image: ${APP_IMAGE:-enterprise-assistant:latest}
+  build: .
+
+x-backend-env: &backend-env
+  MONGO_URI: mongodb://${MONGO_ROOT_USER}:${MONGO_ROOT_PASSWORD}@mongo:27017
+  QDRANT_URL: http://qdrant:6333
+  CHECKPOINTER: mongo
+  LOG_FORMAT: json
+  HF_HUB_OFFLINE: "1"
+
+services:
   mongo:
     image: mongo:7
-    container_name: mongo
-    ports:
-      - "27017:27017"
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: admin123
-    volumes:
-      - ./data/mongo:/data/db
     restart: unless-stopped
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25"]    
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:?set MONGO_ROOT_USER in .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?set MONGO_ROOT_PASSWORD in .env}
+    volumes:
+      - mongo_data:/data/db
+
+  qdrant:
+    image: qdrant/qdrant:v1.18.2
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  bootstrap:
+    <<: *app
+    command: ["python", "-m", "scripts.bootstrap"]
+    restart: "no"
+    env_file: .env
+    environment: *backend-env
+    depends_on: [mongo, qdrant]
+
+  api:
+    <<: *app
+    restart: unless-stopped
+    env_file: .env
+    environment: *backend-env
+    depends_on:
+      bootstrap:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:8000:8000"          
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  ui:
+    <<: *app
+    restart: unless-stopped
+    command: ["streamlit", "run", "ui/streamlit_app.py", "--server.port=8501", "--server.address=0.0.0.0",
+              "--server.headless=true", "--browser.gatherUsageStats=false"]
+    environment:                        
+      API_URL: http://api:8000
+      LOCK_API_URL: "true"
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8501:8501"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8501/_stcore/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  mongo_data:
+  qdrant_data:

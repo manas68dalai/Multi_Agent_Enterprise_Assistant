@@ -22,9 +22,14 @@ ss.setdefault("messages", [])
 ss.setdefault("pending", None)
 
 # ------------------------------------------------------------------ connection
+LOCK_API_URL = os.getenv("LOCK_API_URL", "").lower() in ("1", "true", "yes")
+
 with st.sidebar:
     st.title("Enterprise Assistant")
-    api_url = st.text_input("API URL", DEFAULT_URL).rstrip("/")
+    if LOCK_API_URL:
+        api_url = DEFAULT_URL.rstrip("/")      
+    else:
+        api_url = st.text_input("API URL", DEFAULT_URL).rstrip("/")
     api_key = st.text_input("API key", DEFAULT_KEY, type="password")
 
 

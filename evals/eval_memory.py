@@ -16,17 +16,14 @@ def tickets_cid(out):
 
 results = []
 
-# 1) Long-term: a fact stated in one thread is used in a NEW thread
 out1, _ = run_turn(graph, "I'm customer C1002 and I prefer short bullet-point answers.", f"t1-{run}", user_id=USER_A)
 stored = any("C1002" in s for s in out1["memory_saved"])
 out2, _ = run_turn(graph, "Show my open tickets.", f"t2-{run}", user_id=USER_A)
 results.append(("long-term recall across threads", stored and "C1002" in tickets_cid(out2)))
 
-# 2) Isolation: another user must NOT inherit that ID
 out3, _ = run_turn(graph, "Show my open tickets.", f"t3-{run}", user_id=USER_B)
 results.append(("user isolation", "C1002" not in tickets_cid(out3) and not out3["memories"]))
 
-# 3) Short-term: a follow-up inside the same thread resolves "that customer"
 run_turn(graph, "Look up customer C1001", f"t4-{run}", user_id=USER_B)
 out5, _ = run_turn(graph, "Show open tickets for that customer.", f"t4-{run}", user_id=USER_B)
 results.append(("short-term follow-up in same thread", "C1001" in tickets_cid(out5)))

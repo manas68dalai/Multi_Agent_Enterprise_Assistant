@@ -63,20 +63,38 @@ def setup_logging():
 
 
 def setup_tracing() -> bool:
-    """Enable LangSmith tracing. Must run before the first LLM call (the library reads env vars early)."""
+    """Enable LangSmith tracing. Must run before the first LLM call (the library reads env vars early).
+    The key is checked once; if LangSmith rejects it, tracing is switched off with one clear warning
+    instead of a flood of 403 errors."""
     if not settings.langsmith_tracing:
         return False
-    if not settings.langsmith_api_key:
+    key = settings.langsmith_api_key.strip().strip('"').strip("'")
+    if not key:
         log.warning("LANGSMITH_TRACING is on but LANGSMITH_API_KEY is empty: tracing disabled")
         return False
-    env = {"LANGSMITH_TRACING": "true", "LANGSMITH_API_KEY": settings.langsmith_api_key,
-           "LANGSMITH_PROJECT": settings.langsmith_project,
-           "LANGCHAIN_TRACING_V2": "true", "LANGCHAIN_API_KEY": settings.langsmith_api_key,
-           "LANGCHAIN_PROJECT": settings.langsmith_project}
+
+    env = {"LANGSMITH_TRACING": "true", "LANGSMITH_API_KEY": key, "LANGSMITH_PROJECT": settings.langsmith_project,
+           "LANGCHAIN_TRACING_V2": "true", "LANGCHAIN_API_KEY": key, "LANGCHAIN_PROJECT": settings.langsmith_project}
+    if settings.langsmith_endpoint:
+        env["LANGSMITH_ENDPOINT"] = env["LANGCHAIN_ENDPOINT"] = settings.langsmith_endpoint
+    if settings.langsmith_workspace_id:
+        env["LANGSMITH_WORKSPACE_ID"] = settings.langsmith_workspace_id
     if settings.langsmith_hide_io:
         env.update({"LANGCHAIN_HIDE_INPUTS": "true", "LANGCHAIN_HIDE_OUTPUTS": "true",
                     "LANGSMITH_HIDE_INPUTS": "true", "LANGSMITH_HIDE_OUTPUTS": "true"})
     os.environ.update(env)
+
+    try:
+        from langsmith import Client
+        next(iter(Client().list_projects(limit=1)), None)        
+    except Exception as e:
+        msg = str(e)
+        if any(token in msg for token in ("401", "403", "Forbidden", "Unauthorized")):
+            log.warning("LangSmith rejected the API key (%s). Tracing is DISABLED. Check the key, the region "
+                        "(LANGSMITH_ENDPOINT) and the workspace (LANGSMITH_WORKSPACE_ID).", msg[:100])
+            os.environ["LANGSMITH_TRACING"] = os.environ["LANGCHAIN_TRACING_V2"] = "false"
+            return False
+        log.warning("Could not verify the LangSmith key (%s); leaving tracing on", msg[:100])
     return True
 
 def make_run_config(thread_id: str, user_id: str, session_id: str | None = None, kind: str = "chat",

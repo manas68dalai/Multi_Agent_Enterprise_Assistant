@@ -13,6 +13,14 @@ from app.graph.utils import message_text
 log = logging.getLogger("agents")
 MAX_TOOL_ROUNDS = 4
 
+RETRY_HINT = ("Your last tool call could not be processed (malformed or invalid arguments). "
+              "Call the tool again with valid JSON arguments, or answer in plain text if no tool is needed.")
+
+
+def _is_tool_format_error(e: Exception) -> bool:
+    text = str(e)
+    return "tool_use_failed" in text or "Failed to parse tool call" in text or "tool call validation failed" in text
+
 
 class LoopState(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
@@ -22,10 +30,17 @@ class LoopState(TypedDict):
 def build_agent_loop(tools, system_prompt: str):
     """llm <-> tools loop with a hard cap on tool rounds."""
     llm = get_llm().bind_tools(tools)
-    tool_node = ToolNode(tools, handle_tool_errors=True)  
+    tool_node = ToolNode(tools, handle_tool_errors=True)   
 
     def call_model(state: LoopState):
-        resp = llm.invoke([SystemMessage(content=system_prompt)] + state["messages"])
+        msgs = [SystemMessage(content=system_prompt)] + state["messages"]
+        try:
+            resp = llm.invoke(msgs)
+        except Exception as e:
+            if not _is_tool_format_error(e):
+                raise
+            log.warning("provider rejected a tool call; retrying once: %s", str(e)[:160])
+            resp = llm.invoke(msgs + [HumanMessage(content=RETRY_HINT)])
         return {"messages": [resp], "rounds": state["rounds"] + (1 if resp.tool_calls else 0)}
 
     def route(state: LoopState):
@@ -51,7 +66,7 @@ def _parse_tool_message(m: ToolMessage) -> dict:
     if isinstance(data, dict) and "ok" in data:
         return {"ok": bool(data["ok"]), "error": data.get("error"),
                 "retryable": bool(data.get("retryable")), "data": data.get("data")}
-    is_err = getattr(m, "status", None) == "error"      # ToolNode's own error text
+    is_err = getattr(m, "status", None) == "error"    
     return {"ok": not is_err, "error": str(m.content)[:300] if is_err else None,
             "retryable": False, "data": None}
 
@@ -97,14 +112,14 @@ def make_agent_node(name: str, tools, system_prompt: str):
                 elif hard:
                     status = "partial"
                 else:
-                    status = "success"         
+                    status = "success"       
             else:
                 summary = "The agent could not finish within the tool-call limit."
                 errors.append(f"{name}: tool-call limit reached")
         except Exception as e:
-            log.warning("%s agent crashed: %s", name, e)
+            log.warning("%s agent crashed: %s", name, str(e)[:200])
             summary = f"The {name} agent crashed: {type(e).__name__}"
-            errors.append(f"{name}: {summary}")
+            errors.append(f"{name}: {summary} - {str(e)[:160]}")
 
         reports.append({"agent": name, "status": status, "summary": summary, "attempt": attempts[name]})
         return {"attempts": attempts, "tool_results": tool_results, "errors": errors,

@@ -58,7 +58,7 @@ for i in range(15):
         "created_at": now - timedelta(days=random.randint(0, 60)),
     })
 db.tickets.insert_many(tickets)
-db.counters.insert_one({"_id": "ticket", "seq": 9000 + len(tickets)})   # next ticket = T9016
+db.counters.insert_one({"_id": "ticket", "seq": 9000 + len(tickets)})  
 
 db.customers.create_index("customer_id", unique=True)
 db.orders.create_index("order_id", unique=True)

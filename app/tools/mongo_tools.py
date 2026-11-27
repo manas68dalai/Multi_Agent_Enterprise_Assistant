@@ -12,6 +12,7 @@ from app.tools.schemas import (
 )
 
 NO_ID = {"_id": 0}
+MAX_ROWS = 20          
 
 
 def _norm(x: str) -> str:
@@ -19,7 +20,13 @@ def _norm(x: str) -> str:
 
 
 def _parse_date(s: str) -> datetime:
-    return datetime.fromisoformat(s.strip()) 
+    return datetime.fromisoformat(s.strip())     
+
+
+def _clamp(limit: int) -> tuple[int, dict]:
+    capped = max(1, min(int(limit), MAX_ROWS))
+    note = {"note": f"Result limited to {MAX_ROWS} rows; more may exist."} if limit > MAX_ROWS else {}
+    return capped, note
 
 
 @tool("get_customer_by_id", args_schema=GetCustomerInput)
@@ -36,10 +43,11 @@ def get_customer_by_id(customer_id: str) -> dict:
 @safe
 def search_customers(name_query: str, limit: int = 5) -> dict:
     """Find customers by (partial) name. Use this when you don't have a customer ID."""
+    limit, note = _clamp(limit)
     pattern = re.escape(name_query.strip())       
     docs = list(get_mongo_db().customers
                 .find({"name": {"$regex": pattern, "$options": "i"}}, NO_ID).limit(limit))
-    return ok({"count": len(docs), "customers": [Customer(**d).model_dump(mode="json") for d in docs]})
+    return ok({"count": len(docs), "customers": [Customer(**d).model_dump(mode="json") for d in docs], **note})
 
 
 @tool("get_order_by_id", args_schema=GetOrderInput)
@@ -59,6 +67,7 @@ def search_orders(customer_id: str | None = None, status: str | None = None,
                   date_from: str | None = None, date_to: str | None = None,
                   limit: int = 10) -> dict:
     """Search orders by customer, status, total range (USD) and/or date range. Newest first."""
+    limit, note = _clamp(limit)
     q: dict = {}
     if customer_id:
         q["customer_id"] = _norm(customer_id)
@@ -80,20 +89,21 @@ def search_orders(customer_id: str | None = None, status: str | None = None,
         q["order_date"] = dates
 
     docs = list(get_mongo_db().orders.find(q, NO_ID).sort("order_date", -1).limit(limit))
-    return ok({"count": len(docs), "orders": [Order(**d).model_dump(mode="json") for d in docs]})
+    return ok({"count": len(docs), "orders": [Order(**d).model_dump(mode="json") for d in docs], **note})
 
 
 @tool("search_tickets", args_schema=SearchTicketsInput)
 @safe
 def search_tickets(customer_id: str | None = None, status: str | None = None, limit: int = 10) -> dict:
     """Search support tickets by customer ID and/or status. Newest first."""
+    limit, note = _clamp(limit)
     q: dict = {}
     if customer_id:
         q["customer_id"] = _norm(customer_id)
     if status:
         q["status"] = status
     docs = list(get_mongo_db().tickets.find(q, NO_ID).sort("created_at", -1).limit(limit))
-    return ok({"count": len(docs), "tickets": [Ticket(**d).model_dump(mode="json") for d in docs]})
+    return ok({"count": len(docs), "tickets": [Ticket(**d).model_dump(mode="json") for d in docs], **note})
 
 
 @tool("create_ticket", args_schema=CreateTicketInput)

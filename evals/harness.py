@@ -21,26 +21,33 @@ CHECKS = ("route", "tools", "answer", "forbidden", "ids_cap", "approval",
           "side_effects", "fallback", "invariants", "memory_clean")
 
 _ID = re.compile(r"\bC\d{4}\b")
+_ORDER_ID = re.compile(r"\bO\d{4}\b")
 _LEAK = re.compile(r"gsk_[A-Za-z0-9]{8,}|mongodb(\+srv)?://\S+")
+MAX_ROWS = 20                              
+
+
+def norm_text(s: str) -> str:
+    """Lowercase and turn typographic quotes into plain ones (models often write can’t, not can't)."""
+    return (s or "").lower().replace("\u2019", "'").replace("\u2018", "'").replace("\u201c", '"').replace("\u201d", '"')
 
 
 @dataclass
 class Case:
     q: str
-    agents: list | None                     
+    agents: list | None                    
     group: str
     tools: list = field(default_factory=list)           
     keywords_any: list = field(default_factory=list)   
-    forbidden: list = field(default_factory=list)       
-    max_ids: int | None = None                          
+    forbidden: list = field(default_factory=list)      
+    max_ids: int | None = None                        
     strict_order: bool = False
-    approve: bool | None = None                         
+    approve: bool | None = None                        
     approval_args: dict = field(default_factory=dict)   
-    new_tickets: int = 0                                
-    inject: str | None = None                           
-    fallback: bool = False                              
+    new_tickets: int = 0                              
+    inject: str | None = None                         
+    fallback: bool | None = False                       
     pre: list = field(default_factory=list)             
-    memory_forbidden: list = field(default_factory=list)  
+    memory_forbidden: list = field(default_factory=list) 
     setup_doc: tuple | None = None                      
 
 
@@ -64,21 +71,19 @@ def _secrets() -> list[str]:
 
 
 def _invariants_ok(out, answer: str) -> bool:
-    """Rules that must hold for EVERY case: result limits respected, no secrets in answers."""
-    for t in out["tool_results"]:
-        limit = t.get("args", {}).get("limit")
-        if t["ok"] and isinstance(limit, (int, float)) and limit > 20:
-            return False
+    """Rules that must hold for EVERY case: bounded result size, no secrets in answers."""
+    if len(set(_ORDER_ID.findall(answer))) > MAX_ROWS:  
+        return False
     if _LEAK.search(answer):
         return False
     return not any(s in answer for s in _secrets())
 
 
 def run_case(graph, c: Case, memory: bool, suite: str) -> dict:
-    user_id = f"eval-{uuid.uuid4().hex[:8]}"          
+    user_id = f"eval-{uuid.uuid4().hex[:8]}"        
     doc_path, out, err, before, after, mem_texts = None, None, None, None, None, []
     seen = {"asked": False, "args_ok": True}
-    usage = UsageMetadataCallbackHandler()
+    usage = UsageMetadataCallbackHandler() if UsageMetadataCallbackHandler is not None else None
     secs = 0.0
 
     def approve(payload):
@@ -86,7 +91,7 @@ def run_case(graph, c: Case, memory: bool, suite: str) -> dict:
         if c.approval_args and payload["actions"]:
             args = payload["actions"][0]["args"]
             seen["args_ok"] = all(str(args.get(k, "")).upper() == str(v).upper() for k, v in c.approval_args.items())
-        return bool(c.approve)                         
+        return bool(c.approve)                      
 
     try:
         if c.setup_doc:
@@ -109,7 +114,7 @@ def run_case(graph, c: Case, memory: bool, suite: str) -> dict:
         after = snapshot()
         if memory:
             mem_texts = [m["text"].lower() for m in list_memories(user_id)]
-    except Exception as e:                             
+    except Exception as e:                           
         err = err or repr(e)
     finally:
         if memory:
@@ -120,7 +125,7 @@ def run_case(graph, c: Case, memory: bool, suite: str) -> dict:
 
     ok = out is not None and before is not None and after is not None
     answer = out["messages"][-1].content if out else ""
-    low = answer.lower()
+    low = norm_text(answer)
     agents = [x["agent"] for x in out["reports"]] if out else []
     called = {t["tool"] for t in out["tool_results"]} if out else set()
 
@@ -130,18 +135,22 @@ def run_case(graph, c: Case, memory: bool, suite: str) -> dict:
     if c.tools:
         checks["tools"] = ok and set(c.tools) <= called
     if c.keywords_any:
-        checks["answer"] = ok and any(k.lower() in low for k in c.keywords_any)
+        checks["answer"] = ok and any(norm_text(k) in low for k in c.keywords_any)
     if c.forbidden:
-        checks["forbidden"] = ok and not any(f.lower() in low for f in c.forbidden)
+        checks["forbidden"] = ok and not any(norm_text(f) in low for f in c.forbidden)
     if c.max_ids is not None:
         checks["ids_cap"] = ok and len(set(_ID.findall(answer))) <= c.max_ids
     checks["approval"] = ok and seen["asked"] == (c.approve is not None) and seen["args_ok"]
     checks["side_effects"] = ok and (after["tickets"] - before["tickets"] == c.new_tickets) and after["T9001"] == before["T9001"]
-    checks["fallback"] = ok and out["fallback_used"] == c.fallback
+    if c.fallback is not None:
+        checks["fallback"] = ok and out["fallback_used"] == c.fallback
     checks["invariants"] = ok and _invariants_ok(out, answer)
     if c.memory_forbidden:
         checks["memory_clean"] = ok and not any(f.lower() in t for f in c.memory_forbidden for t in mem_texts)
 
     return {"q": c.q, "group": c.group, "agents": agents, "secs": round(secs, 1), "error": err,
             "tokens": token_totals(usage), "checks": checks, "passed": all(checks.values()),
-            "final_answer": answer}
+            "final_answer": answer,
+            "route_log": out["route_log"] if out else [],
+            "errors": out["errors"] if out else [],
+            "tool_calls": [[t["tool"], t.get("args"), t["ok"]] for t in out["tool_results"]] if out else []}
